@@ -24,8 +24,8 @@ const rootDir = path.resolve(__dirname, '..')
 const entitlementsPath = path.join(rootDir, 'src-tauri', 'resources', 'runtime-entitlements.plist')
 
 const signingIdentity = (process.env.APPLE_SIGNING_IDENTITY || '').trim()
-if (!signingIdentity) {
-  console.log('APPLE_SIGNING_IDENTITY 未设置，跳过 bundle 签名。')
+if (!signingIdentity || signingIdentity === '-') {
+  console.log('APPLE_SIGNING_IDENTITY não configurado ou é ad-hoc (-), pulando re-assinatura de bundles.')
   process.exit(0)
 }
 

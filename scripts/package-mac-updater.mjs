@@ -41,7 +41,7 @@ const tauriPrivateKey = (process.env.TAURI_SIGNING_PRIVATE_KEY || '').trim()
 const tauriPrivateKeyPassword = (process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '').trim()
 
 const canNotarize = Boolean(appleId && applePassword && appleTeamId)
-const canSign = Boolean(signingIdentity)
+const canSign = Boolean(signingIdentity && signingIdentity !== '-')
 
 const archMap = { x64: 'x86_64', arm64: 'aarch64' }
 const tauriArch = archMap[os.arch()] || os.arch()

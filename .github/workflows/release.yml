@@ -84,7 +84,7 @@ jobs:
 
       - name: Build Tauri bundle (.app only)
         env:
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '-' }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npx tauri build --target aarch64-apple-darwin --bundles app
@@ -219,6 +219,9 @@ jobs:
             libssl-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
+            libdbus-1-dev \
+            pkg-config \
+            libfuse2 \
             patchelf
 
       - name: Install dependencies
@@ -226,6 +229,8 @@ jobs:
 
       - name: Build Tauri bundle (deb & AppImage)
         env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+          NO_STRIP: "true"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npx tauri build --bundles deb,appimage
