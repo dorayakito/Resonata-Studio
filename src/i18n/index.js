@@ -12,6 +12,7 @@
 import { messages as zh } from './locales/zh.js'
 import { messages as en } from './locales/en.js'
 import { messages as ja } from './locales/ja.js'
+import { messages as pt } from './locales/pt.js'
 
 const STORAGE_KEY = 'webutau:locale'
 const DEFAULT_LOCALE = 'zh'
@@ -21,6 +22,7 @@ const REGISTRY = {
   zh: { code: 'zh', label: '中文', tag: 'zh-CN', short: '中', messages: zh },
   en: { code: 'en', label: 'English', tag: 'en', short: 'EN', messages: en },
   ja: { code: 'ja', label: '日本語', tag: 'ja', short: '日', messages: ja },
+  pt: { code: 'pt', label: 'Português (Brasil)', tag: 'pt-BR', short: 'PT', messages: pt },
 }
 
 export const SUPPORTED_LOCALES = Object.keys(REGISTRY)
@@ -48,6 +50,7 @@ function detectInitialLocale() {
   // 浏览器语言匹配
   try {
     const navLang = (navigator?.language || navigator?.userLanguage || '').toLowerCase()
+    if (navLang.startsWith('pt')) return 'pt'
     if (navLang.startsWith('ja')) return 'ja'
     if (navLang.startsWith('zh')) return 'zh'
     if (navLang.startsWith('en')) return 'en'

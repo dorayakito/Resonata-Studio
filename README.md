@@ -1,114 +1,121 @@
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
-    <img src="docs/banner-light.png" alt="WebUtau" width="440">
+    <img src="docs/banner-light.png" alt="Resonata Studio" width="440">
   </picture>
 </div>
 
-<p align="center"><strong>一站式虚拟歌姬网页工作站</strong> — 导入 MIDI，填写歌词，让虚拟歌姬为你演唱！</p>
+<p align="center"><strong>Resonata Studio</strong> — Estação de Trabalho Completa para Cantores Virtuais (Web & Desktop)</p>
+<p align="center">Importe MIDI, insira letras e deixe a voz virtual cantar por você!</p>
 
-![webUTAU 界面预览](docs/screenshot.png)
+![Prévia da Interface do Resonata Studio](docs/screenshot.png)
 
-在线体验版：[https://singer.haruyuki.cn/](https://singer.haruyuki.cn/) ，受服务器资源限制，体验版可能卡顿，且有时不可用，体验后请优先下载本地版使用。体验版中预设的声库为[泠鸢yousa](https://github.com/yousa-ling-official-production/yousa-ling-diffsinger-v1)声库，使用时请遵守其使用规定。
+Versão de demonstração online: [https://singer.haruyuki.cn/](https://singer.haruyuki.cn/) (devido a restrições de recursos de servidor, a versão online pode apresentar lentidão ou instabilidade; recomenda-se utilizar a versão local). O banco de voz padrão na demonstração é o da [泠鸢yousa](https://github.com/yousa-ling-official-production/yousa-ling-diffsinger-v1); respeite os termos de uso do banco.
 
-WebUtau 交流群：[1095642281](https://qm.qq.com/q/bu34h3wR9e)
+Grupo de comunidade (QQ): [1095642281](https://qm.qq.com/q/bu34h3wR9e)
 
+## Principais Recursos
 
-## 功能亮点
+### Canto com Cantores Virtuais
+Baseado no motor de síntese de canto [OpenUtau](https://github.com/stakira/OpenUtau), suporta o carregamento dos principais bancos de voz UTAU/DiffSinger, permitindo que você componha melodias e letras diretamente no navegador para que a voz virtual cante.
 
-### 虚拟歌姬演唱
-基于 [OpenUtau](https://github.com/stakira/OpenUtau) 歌声合成引擎，支持加载 UTAU 主流声库，在浏览器中即可驱动虚拟歌姬声库演唱你编写的旋律与歌词。
+### Formas Flexíveis de Uso
+Suporte à execução via código-fonte na web ou instalação como cliente desktop nativo. Tanto na versão web quanto no desktop, é possível gerar links de compartilhamento para utilizar em outros dispositivos ou enviar para outras pessoas. Ao abrir o link em qualquer navegador, você tem acesso completo ao projeto e aos seus bancos de voz locais sem precisar instalar nada no outro dispositivo.
 
-### 灵活的使用方式
-支持通过源码启动网页版，也支持安装点击即用的客户端。无论是在网页版还是客户端中，你都可以生成一个分享链接，在其它设备上使用或分享给他人。在浏览器中打开分享链接即可以完整使用该项目，并加载你在本地的声库，无需其它安装流程。
+### Conversão de Timbre de Voz
+Suporte à tecnologia de conversão de voz [SeedVC](https://github.com/Plachtaa/seed-vc), permitindo converter a voz cantada para o timbre desejado (requer a execução local do [SeedVC](https://github.com/Plachtaa/seed-vc)).
 
-### 音色转换
-支持 [SeedVC](https://github.com/Plachtaa/seed-vc) 音色转换技术，可将歌姬的演唱转换为目标音色，使用此功能需自行在本地部署[SeedVC](https://github.com/Plachtaa/seed-vc)。
+### Editor Piano Roll
+Interface intuitiva de *Piano Roll*, com suporte à importação de arquivos MIDI e edição manual, oferecendo controle fino sobre afinação (*pitch*), duração e divisão multitrack.
 
-### 钢琴卷帘编辑器
-直观的钢琴卷帘界面，支持 MIDI 导入与手动编辑，提供音高、时值的精细控制，对于多轨道MIDI有良好的支持。
+### Edição de Letras e Fonemas
+Suporte à inserção de letras em japonês, chinês e outros idiomas, com painel de preenchimento rápido inteligente para associar automaticamente as sílabas às notas.
 
-### 歌词编辑
-支持中文与日语歌词输入，提供快速填词面板，可批量填写并自动匹配音符。
+### Acompanhamento Instrumental Multifaixa
+Instrumentos integrados como piano, violino, bateria, guitarra e baixo com suporte a arranjo e mixagem multitrack, criando um acompanhamento instrumental completo.
 
-### 多轨乐器伴奏
-内置钢琴、小提琴、鼓组等多种乐器音色，支持多轨编排与混音，为歌声配上完整伴奏。
+### Mixagem e Efeitos
+Reverberação por canal, controle de volume, equalização de 4 bandas, compressão e cadeia master de masterização com medição LUFS.
 
-### 混音与效果
-轨道级混响、音量控制，多种预设效果风格，让作品更具表现力。
+### Exportação Sem Perdas (Lossless)
+Exportação precisa de faixas selecionadas ou do projeto inteiro em formato WAV de alta fidelidade para produção rápida de prévias e versões finais.
 
-### 无损导出
-可精准导出指定轨道或整个工程的无损音频，快速产出试听版本。
+### Suporte Multiplataforma
+Compatível com macOS, Windows e Linux.
 
-### 跨平台支持
-支持Windows、Mac、Linux平台使用。
+## Início Rápido
 
-## 快速开始
+### Executando pelo Aplicativo Desktop
 
-### 通过客户端版本运行
+Para usuários sem experiência com linha de comando, a melhor opção é baixar o instalador nas [Releases](https://github.com/dorayakito/WebUtau/releases/latest). Após instalar, configure seus bancos de voz no diretório indicado:
 
-对于无部署经验的用户，通过 [Releases](https://github.com/Marigold1122/WebUtau/releases/latest) 下载可直接安装的客户端是最好的选择。安装后，你可在指定目录中配置你的声库。
+- No **macOS**: `~/webutau/voicebanks`
+- No **Windows**: pasta `/voicebanks` dentro do diretório de instalação do programa
 
-Mac版的声库配置目录位于 `～/webutau/voicebanks` , Windows版位于软件安装目录下的 `/voicebanks` ，将解压后的声库放在这两个目录下即可，每个歌手为独立子文件夹。
+Coloque as pastas descompactadas dos bancos de voz nesses diretórios (uma subpasta para cada cantor).
 
-### 通过源码启动网页版
+### Executando a Versão Web a partir do Código-Fonte
 
-该方式仅推荐有项目部署经验的用户使用。
+Recomendado para desenvolvedores.
 
-#### 环境要求
+#### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) LTS
 - [Git](https://git-scm.com/)
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
-#### 安装与启动
+#### Instalação e Inicialização
 
 ```bash
-git clone https://github.com/Marigold1122/melody-singer.git
-cd melody-singer
+git clone https://github.com/dorayakito/WebUtau.git
+cd WebUtau
 npm install
 ```
 
-将声库放入 `server/voicebanks/` 下（每个歌手为独立子文件夹）。
+Coloque os bancos de voz em `server/voicebanks/` (cada cantor em uma subpasta individual).
 
-在Mac上应运行`dev-mac.sh`，在Windows上应运行`dev.bat`。
+- No **macOS / Linux**: execute `./dev-mac.sh`
+- No **Windows**: execute `dev.bat`
 
-打开浏览器访问 http://localhost:3000 即可使用。(具体端口以终端显示为准)
-
+Abra o navegador e acesse `http://localhost:3000` (a porta exata será informada no terminal).
 
 <details>
-<summary><strong>SeedVC 音色转换（可选）</strong></summary>
+<summary><strong>Conversão de Timbre SeedVC (Opcional)</strong></summary>
 
-需要 [Python 3.10](https://www.python.org/downloads/release/python-31011/)，建议配备 NVIDIA GPU（GTX 1060+）。
+Requer [Python 3.10](https://www.python.org/downloads/release/python-31011/), preferencialmente com GPU NVIDIA (GTX 1060+).
 
 ```bash
 git clone https://github.com/Plachtaa/seed-vc.git external/seed-vc
 cd external/seed-vc
 python -m venv .venv
+# No Windows:
 .venv\Scripts\activate
+# No macOS/Linux:
+source .venv/bin/activate
+
 pip install torch==2.4.1+cu124 torchvision==0.19.1+cu124 torchaudio==2.4.1+cu124 --index-url https://download.pytorch.org/whl/cu124
 pip install -r requirements.txt
 pip install fastapi uvicorn python-multipart
 cd ../..
-scripts\start-seedvc-service.bat
+# Para iniciar o serviço SeedVC:
+scripts\start-seedvc-service.bat  # ou equivalente no Linux/macOS
 ```
 
-> 无 NVIDIA GPU 可将 PyTorch 安装命令替换为 `pip install torch torchvision torchaudio`。
+> Em sistemas sem GPU NVIDIA dedicada, utilize `pip install torch torchvision torchaudio`.
 
 </details>
 
-## 关于我们
+## Sobre Nós
 
-webUTAU 由 **凉宫春日开发组** 发布，此项目的核心开发者是 [Marigold1122](https://github.com/Marigold1122) 。
+O **Resonata Studio** é mantido pelo **Grupo de Desenvolvimento Haruhi Suzumiya**, com desenvolvimento principal por [Marigold1122](https://github.com/Marigold1122).
 
-**凉宫春日开发组** 是 [**凉宫春日应援团**](https://space.bilibili.com/201296348) 的附属组织，致力于创造更多让世界变得更加热闹的项目。
+O **Grupo de Desenvolvimento Haruhi Suzumiya** é afiliado à [**Haruhi Fan Club**](https://space.bilibili.com/201296348), dedicado à criação de projetos livres que enriquecem o ecossistema criativo.
 
-欢迎通过 haruhifanclub@outlook.com 投递加入申请！
+Contato e candidaturas: haruhifanclub@outlook.com
 
-## 技术栈
+## Stack Tecnológica
 
-前端：Vanilla JavaScript + Vite + Web Audio API + Tone.js
-
-后端：.NET 8 + ASP.NET Core（基于 [OpenUtau](https://github.com/stakira/OpenUtau) 核心模块）
-
-音色转换：Python + PyTorch + SeedVC
+- **Frontend:** Vanilla JavaScript + Vite + Web Audio API + Tone.js + Kuromoji + Wanakana
+- **Desktop:** Tauri v2 (Rust)
+- **Backend:** .NET 8 + ASP.NET Core (baseado no núcleo do [OpenUtau](https://github.com/stakira/OpenUtau))
+- **Conversão de Voz:** Python + PyTorch + SeedVC

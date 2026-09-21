@@ -65,10 +65,10 @@ export const messages = {
     footer: {
       onboarding: 'Onboarding',
       about: 'About',
-      about_tooltip: 'About WEB UTAU',
+      about_tooltip: 'About Resonata Studio',
     },
     about: {
-      app_name: 'WEB UTAU',
+      app_name: 'Resonata Studio',
       subtitle: 'AI singing-voice studio',
       check_hint: 'Click the button to check for updates.',
       web_no_update: 'The web build has no auto-update. Use the desktop build for the latest features.',
@@ -538,12 +538,12 @@ export const messages = {
   },
   onboarding: {
     welcome: {
-      p1: 'Welcome to WebUtau!',
+      p1: 'Welcome to Resonata Studio!',
       p2: 'It is a one-stop virtual-singer workstation. Beyond simple voice changing, you can teach the virtual singer your own <b>lyrics</b> and <b>melody</b>.',
     },
     importDemo: {
       p1: 'You can import MIDI files for custom scores — but hold on a moment.',
-      p2: 'If you are new to this kind of tool, we <b style="color:{accent}">strongly recommend</b> clicking "God Knows" or "Beyond" below to experience WebUtau through demos.',
+      p2: 'If you are new to this kind of tool, we <b style="color:{accent}">strongly recommend</b> clicking "God Knows" or "Beyond" below to experience Resonata Studio through demos.',
     },
     syncImport: 'After loading a demo, an "Import Timing" dialog appears. Click <b>Sync & apply</b> to inherit the demo\'s tempo and time-signature.',
     play: 'All tracks default to piano. Don\'t worry about instruments yet — click the play button on top to <b>preview</b> the result.',
@@ -558,7 +558,7 @@ export const messages = {
       p2_alt: 'When rendering finishes, hit play again — Lead 1 will sing!',
     },
     waitPrediction: {
-      p1: 'WebUtau is <b>predicting pitch</b> from the score; please wait…',
+      p1: 'Resonata Studio is <b>predicting pitch</b> from the score; please wait…',
       p2: 'When prediction completes, the tutorial moves on automatically.',
     },
     quickLyricOpen: {
