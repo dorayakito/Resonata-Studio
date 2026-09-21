@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to build (ex: v1.2.0, must exist)"
+        description: "Tag to build (ex: v1.2.0)"
         required: true
         type: string
 
@@ -16,11 +16,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ------------------------------------------------------------------
-  # Job 1: macOS Apple Silicon Build
-  # ------------------------------------------------------------------
   build-macos-arm64:
-    name: Build · macOS arm64
+    name: macOS (arm64)
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
@@ -48,41 +45,27 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - name: Import Apple signing certificate
+      - name: Setup Apple signing certificate
+        if: env.APPLE_CERTIFICATE != ''
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           KEYCHAIN_PASSWORD: ${{ github.run_id }}
         run: |
-          if [ -z "$APPLE_CERTIFICATE" ]; then
-            echo "No Apple certificate secret provided, skipping keychain import."
-            exit 0
-          fi
-          set -e
-          CERT_PATH=$RUNNER_TEMP/build-cert.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
+          CERT_PATH="$RUNNER_TEMP/build-cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
           echo -n "$APPLE_CERTIFICATE" | base64 --decode -o "$CERT_PATH"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security import "$CERT_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A \
-            -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s \
-            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH" > "$RUNNER_TEMP/identities.txt"
-          cat "$RUNNER_TEMP/identities.txt"
-          if grep -qF "$APPLE_SIGNING_IDENTITY" "$RUNNER_TEMP/identities.txt"; then
-            echo "✓ APPLE_SIGNING_IDENTITY matches certificate in keychain"
-          else
-            echo "⚠ Signing identity mismatch; continuing without signing identity"
-          fi
+          security import "$CERT_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Tauri bundle (.app only)
+      - name: Build Tauri app
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '-' }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -94,7 +77,7 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: node scripts/fix-bundle-signatures.mjs
 
-      - name: Create DMG + updater tarball
+      - name: Package DMG and updater
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
@@ -104,7 +87,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: node scripts/package-mac-updater.mjs
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-arm64
@@ -112,11 +95,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # ------------------------------------------------------------------
-  # Job 2: Windows x64 Build
-  # ------------------------------------------------------------------
   build-windows:
-    name: Build · Windows x64
+    name: Windows (x64)
     runs-on: windows-latest
     timeout-minutes: 90
     steps:
@@ -153,7 +133,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npx tauri build --bundles nsis
 
-      - name: Sign installer & generate latest.json fragment
+      - name: Package installer and updater
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -163,11 +143,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p windows-out
-          cp src-tauri/target/release/bundle/nsis/*.exe windows-out/ || true
-          cp src-tauri/target/release/bundle/nsis/*.sig windows-out/ || true
-          cp src-tauri/target/release/bundle/nsis/latest.json windows-out/ || true
+          cp src-tauri/target/release/bundle/nsis/*.exe windows-out/ 2>/dev/null || true
+          cp src-tauri/target/release/bundle/nsis/*.sig windows-out/ 2>/dev/null || true
+          cp src-tauri/target/release/bundle/nsis/latest.json windows-out/ 2>/dev/null || true
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-x64
@@ -175,11 +155,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # ------------------------------------------------------------------
-  # Job 3: Linux x64 Build
-  # ------------------------------------------------------------------
   build-linux-x64:
-    name: Build · Linux x64
+    name: Linux (x64)
     runs-on: ubuntu-22.04
     timeout-minutes: 90
     steps:
@@ -236,15 +213,13 @@ jobs:
         run: npx tauri build --bundles deb,appimage
 
       - name: Collect artifacts
-        shell: bash
         run: |
           mkdir -p linux-out
           cp src-tauri/target/release/bundle/deb/*.deb linux-out/ 2>/dev/null || true
           cp src-tauri/target/release/bundle/appimage/*.AppImage linux-out/ 2>/dev/null || true
           cp src-tauri/target/release/bundle/appimage/*.sig linux-out/ 2>/dev/null || true
-          ls -la linux-out/
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-x64
@@ -252,11 +227,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # ------------------------------------------------------------------
-  # Job 4: Publish GitHub Release
-  # ------------------------------------------------------------------
   publish:
-    name: Publish
+    name: Publish Release
     needs: [build-macos-arm64, build-windows, build-linux-x64]
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -272,21 +244,22 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Install minimal deps
+      - name: Install dependencies
         run: npm ci --omit=optional
 
-      - name: Download all build artifacts
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Resolve tag & version
+      - name: Resolve release metadata
         id: meta
         run: |
           TAG="${{ inputs.tag || github.ref_name }}"
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
           NOTES_FILE=release-notes.md
           if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null 2>&1; then
             git tag -l --format='%(contents)' "$TAG" > "$NOTES_FILE"
@@ -299,7 +272,7 @@ jobs:
           fi
           echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
 
-      - name: Compose latest.json
+      - name: Generate latest.json
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           RELEASE_NOTES_FILE: ${{ steps.meta.outputs.notes_file }}
@@ -321,7 +294,6 @@ jobs:
             -name "*.deb" \
           \) -exec cp {} release-assets/ \;
           cp dist-release/latest.github.json release-assets/latest.json
-          ls -lh release-assets/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -334,21 +306,18 @@ jobs:
           files: release-assets/*
           fail_on_unmatched_files: true
 
-      - name: Upload mirror to R2
+      - name: Upload mirror to Cloudflare R2
+        if: env.R2_ACCOUNT_ID != '' && env.R2_ACCESS_KEY_ID != ''
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
-        run: |
-          if [ -z "$R2_ACCOUNT_ID" ] || [ -z "$R2_ACCESS_KEY_ID" ]; then
-            echo "R2 credentials not provided, skipping R2 mirror upload."
-            exit 0
-          fi
-          node scripts/ci-upload-r2.mjs
+        run: node scripts/ci-upload-r2.mjs
 
       - name: Prune old versions on R2
+        if: env.R2_ACCOUNT_ID != '' && env.R2_ACCESS_KEY_ID != ''
         env:
           CURRENT_VERSION: ${{ steps.meta.outputs.version }}
           RETAIN_VERSIONS: ${{ vars.R2_RETAIN_VERSIONS || '2' }}
@@ -356,27 +325,17 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
-        run: |
-          if [ -z "$R2_ACCOUNT_ID" ] || [ -z "$R2_ACCESS_KEY_ID" ]; then
-            echo "R2 credentials not provided, skipping R2 prune."
-            exit 0
-          fi
-          node scripts/ci-prune-r2.mjs
+        run: node scripts/ci-prune-r2.mjs
 
-      - name: Purge Cloudflare cache for latest.json
+      - name: Purge Cloudflare cache
+        if: env.CLOUDFLARE_ZONE_ID != '' && env.CLOUDFLARE_API_TOKEN != ''
         env:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           R2_PUBLIC_BASE: ${{ secrets.R2_PUBLIC_BASE }}
-        run: |
-          if [ -z "$CLOUDFLARE_ZONE_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "Cloudflare purge credentials not provided, skipping cache purge."
-            exit 0
-          fi
-          node scripts/ci-purge-cf.mjs
+        run: node scripts/ci-purge-cf.mjs
 
       - name: Summary
         run: |
-          echo "### ✅ Release ${{ steps.meta.outputs.tag }} published" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Release ${{ steps.meta.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Published to https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
