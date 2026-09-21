@@ -2849,6 +2849,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "resonata-studio-desktop"
+version = "1.2.0"
+dependencies = [
+ "axum",
+ "bytes",
+ "futures-util",
+ "keyring",
+ "once_cell",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-updater",
+ "tokio",
+ "tower",
+ "tower-http",
+]
+
+[[package]]
 name = "ring"
 version = "0.17.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4652,26 +4672,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52f5ee44c96cf55f1b349600768e3ece3a8f26010c05265ab73f945bb1a2eb9d"
 dependencies = [
  "rustls-pki-types",
-]
-
-[[package]]
-name = "webutau-desktop"
-version = "1.2.0"
-dependencies = [
- "axum",
- "bytes",
- "futures-util",
- "keyring",
- "once_cell",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-updater",
- "tokio",
- "tower",
- "tower-http",
 ]
 
 [[package]]

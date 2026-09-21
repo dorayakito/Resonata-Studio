@@ -88,8 +88,8 @@ export class AboutPanelView {
       <div class="about-update-status" data-role="status" ${STATUS_ATTR}="idle"></div>
       <div class="about-update-notes" data-role="notes" hidden></div>
       <div class="about-links">
-        <a href="https://github.com/Marigold1122/melody-singer" target="_blank" rel="noopener noreferrer" data-role="home-link">${t('inspector.about.home_link')}</a>
-        <a href="https://github.com/Marigold1122/melody-singer/releases" target="_blank" rel="noopener noreferrer" data-role="releases-link">${t('inspector.about.releases_link')}</a>
+        <a href="https://github.com/dorayakito/Resonata-Studio" target="_blank" rel="noopener noreferrer" data-role="home-link">${t('inspector.about.home_link')}</a>
+        <a href="https://github.com/dorayakito/Resonata-Studio/releases" target="_blank" rel="noopener noreferrer" data-role="releases-link">${t('inspector.about.releases_link')}</a>
       </div>
     `
 

@@ -33,18 +33,14 @@ if (!version) {
 }
 
 const notesFile = process.env.RELEASE_NOTES_FILE
-let notes = `webUTAU v${version}`
+let notes = `Resonata Studio v${version}`
 if (notesFile && existsSync(notesFile)) {
   notes = readFileSync(notesFile, 'utf8').trim() || notes
 }
 
 const r2Base = (process.env.R2_PUBLIC_BASE || '').replace(/\/+$/, '')
-if (!r2Base) {
-  console.error('R2_PUBLIC_BASE env var required')
-  process.exit(1)
-}
 
-const ghRepo = process.env.GITHUB_REPOSITORY || 'Marigold1122/melody-singer'
+const ghRepo = process.env.GITHUB_REPOSITORY || 'dorayakito/Resonata-Studio'
 const ghReleaseBase = `https://github.com/${ghRepo}/releases/download/v${version}`
 
 if (!existsSync(artifactsDir)) {
@@ -92,12 +88,16 @@ writeFileSync(
   JSON.stringify(githubJson, null, 2) + '\n',
 )
 
-const r2Json = makeVariant(r2Base)
-writeFileSync(
-  path.join(outputDir, 'latest.r2.json'),
-  JSON.stringify(r2Json, null, 2) + '\n',
-)
+if (r2Base) {
+  const r2Json = makeVariant(r2Base)
+  writeFileSync(
+    path.join(outputDir, 'latest.r2.json'),
+    JSON.stringify(r2Json, null, 2) + '\n',
+  )
+}
 
 console.log(`✓ Composed latest.json for platforms: ${Object.keys(mergedPlatforms).join(', ')}`)
 console.log(`  - ${outputDir}/latest.github.json  (→ ${ghReleaseBase}/)`)
-console.log(`  - ${outputDir}/latest.r2.json      (→ ${r2Base}/)`)
+if (r2Base) {
+  console.log(`  - ${outputDir}/latest.r2.json      (→ ${r2Base}/)`)
+}

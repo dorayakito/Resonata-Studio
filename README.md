@@ -47,7 +47,7 @@ Compatível com macOS, Windows e Linux.
 
 ### Executando pelo Aplicativo Desktop
 
-Para usuários sem experiência com linha de comando, a melhor opção é baixar o instalador nas [Releases](https://github.com/dorayakito/WebUtau/releases/latest). Após instalar, configure seus bancos de voz no diretório indicado:
+Para usuários sem experiência com linha de comando, a melhor opção é baixar o instalador nas [Releases](https://github.com/dorayakito/Resonata-Studio/releases/latest). Após instalar, configure seus bancos de voz no diretório indicado:
 
 - No **macOS**: `~/webutau/voicebanks`
 - No **Windows**: pasta `/voicebanks` dentro do diretório de instalação do programa
@@ -67,8 +67,8 @@ Recomendado para desenvolvedores.
 #### Instalação e Inicialização
 
 ```bash
-git clone https://github.com/dorayakito/WebUtau.git
-cd WebUtau
+git clone https://github.com/dorayakito/Resonata-Studio.git
+cd Resonata-Studio
 npm install
 ```
 

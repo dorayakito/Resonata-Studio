@@ -223,7 +223,7 @@ try {
 } catch {}
 
 const updaterEndpoints = tauriConf.plugins?.updater?.endpoints || []
-let releaseBaseUrl = `https://github.com/Marigold1122/melody-singer/releases/download/v${version}`
+let releaseBaseUrl = `https://github.com/dorayakito/Resonata-Studio/releases/download/v${version}`
 for (const endpoint of updaterEndpoints) {
   const m = endpoint.match(/^(https:\/\/github\.com\/[^/]+\/[^/]+)\/releases\//)
   if (m) {

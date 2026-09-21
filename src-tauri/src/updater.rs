@@ -12,10 +12,10 @@ use tauri::AppHandle;
 
 const UPDATE_CHECK_ENDPOINTS: &[&str] = &[
     "https://melody-singer.harucdn.com/latest.json",
-    "https://github.com/Marigold1122/melody-singer/releases/latest/download/latest.json",
+    "https://github.com/dorayakito/Resonata-Studio/releases/latest/download/latest.json",
 ];
 
-const GITHUB_RELEASE_TAG_BASE: &str = "https://github.com/Marigold1122/melody-singer/releases/tag";
+const GITHUB_RELEASE_TAG_BASE: &str = "https://github.com/dorayakito/Resonata-Studio/releases/tag";
 
 #[derive(Debug, Serialize, Clone)]
 pub struct UpdateCheckResult {

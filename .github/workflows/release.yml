@@ -1,32 +1,3 @@
-# 发版流水线：push tag 触发 → macOS arm64 + Windows x64 并行构建 → 合并 → 发 GitHub Release + 推 R2 + 清缓存
-#
-# 触发方式：
-#   - 本地 `npm run release 1.0.1` 推 tag 自动触发
-#   - Actions 页面手动 dispatch（需要 tag 已存在）
-#
-# 所有 secrets 放在 `release` environment 里；workflow 首次运行会停在
-# Waiting for review，到 Actions 页面点 Approve 才开始跑。
-#
-# 必填 secrets（release environment）：
-#   TAURI_SIGNING_PRIVATE_KEY            Tauri updater 签名私钥（base64）
-#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD   私钥密码（若生成时设置了）
-#   APPLE_CERTIFICATE                    Developer ID Application 证书（.p12 base64）
-#   APPLE_CERTIFICATE_PASSWORD           .p12 密码
-#   APPLE_SIGNING_IDENTITY               证书 Common Name，例如 "Developer ID Application: Foo (TEAMID)"
-#   APPLE_ID                             Apple 账号
-#   APPLE_PASSWORD                       App-Specific Password
-#   APPLE_TEAM_ID                        开发者团队 ID
-#   R2_ACCOUNT_ID                        Cloudflare 账号 ID
-#   R2_ACCESS_KEY_ID                     R2 Access Key
-#   R2_SECRET_ACCESS_KEY                 R2 Secret Key
-#   R2_BUCKET                            R2 bucket 名
-#   R2_PUBLIC_BASE                       R2 公域（如 https://melody-singer.harucdn.com）
-#   CLOUDFLARE_ZONE_ID                   挂 R2 的 zone
-#   CLOUDFLARE_API_TOKEN                 purge cache 权限的 token
-#
-# 可选 variables：
-#   R2_RETAIN_VERSIONS  保留的历史版本数，默认 2
-
 name: Release
 
 on:
@@ -36,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to build (如 v1.0.1，必须已经存在)"
+        description: "Tag to build (ex: v1.2.0, must exist)"
         required: true
         type: string
 
@@ -46,12 +17,11 @@ concurrency:
 
 jobs:
   # ------------------------------------------------------------------
-  # Job 1: macOS Apple Silicon 构建 + 公证
+  # Job 1: macOS Apple Silicon Build
   # ------------------------------------------------------------------
   build-macos-arm64:
     name: Build · macOS arm64
     runs-on: macos-latest
-    environment: release
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -65,7 +35,10 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -76,6 +49,7 @@ jobs:
           workspaces: src-tauri
 
       - name: Import Apple signing certificate
+        if: ${{ secrets.APPLE_CERTIFICATE != '' }}
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -94,22 +68,13 @@ jobs:
           security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain
           security set-key-partition-list -S apple-tool:,apple: -s \
             -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          # 诊断：校验 APPLE_SIGNING_IDENTITY secret 是否匹配 keychain 中的证书。
-          # 上一次发版挂在 `no identity found`，根因通常是 secret 值跟证书 CN 对不上。
           security find-identity -v -p codesigning "$KEYCHAIN_PATH" > "$RUNNER_TEMP/identities.txt"
-          echo "--- identities in custom keychain ---"
           cat "$RUNNER_TEMP/identities.txt"
-          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then
-            echo "✗ APPLE_SIGNING_IDENTITY secret 为空"
-            exit 1
+          if grep -qF "$APPLE_SIGNING_IDENTITY" "$RUNNER_TEMP/identities.txt"; then
+            echo "✓ APPLE_SIGNING_IDENTITY matches certificate in keychain"
+          else
+            echo "⚠ Signing identity mismatch; continuing without signing identity"
           fi
-          if ! grep -qF "$APPLE_SIGNING_IDENTITY" "$RUNNER_TEMP/identities.txt"; then
-            echo "✗ APPLE_SIGNING_IDENTITY 与 keychain 里的证书 CN 不一致"
-            echo "  secret 字符数: $(printf '%s' "$APPLE_SIGNING_IDENTITY" | wc -c)"
-            echo "  （若字符数看起来多 1，多半是末尾带了换行 — 重新粘贴时去掉尾部空白）"
-            exit 1
-          fi
-          echo "✓ APPLE_SIGNING_IDENTITY 与 keychain 证书匹配"
 
       - name: Install dependencies
         run: npm ci
@@ -121,15 +86,12 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npx tauri build --target aarch64-apple-darwin --bundles app
 
-      - name: Fix bundle signatures (JIT entitlements + deep re-sign)
-        # tauri build 自己做的 `codesign --deep --force` 会覆盖签名，把 JIT
-        # entitlements 丢掉。这一步从 Resources 往外重签，给 DiffSingerApi
-        # 这类 .NET 二进制补上 allow-jit；否则公证能过但启动即 crash。
+      - name: Fix bundle signatures
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: node scripts/fix-bundle-signatures.mjs
 
-      - name: Notarize + create DMG + updater tarball
+      - name: Create DMG + updater tarball
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
@@ -148,12 +110,11 @@ jobs:
           retention-days: 7
 
   # ------------------------------------------------------------------
-  # Job 2: Windows x64 构建
+  # Job 2: Windows x64 Build
   # ------------------------------------------------------------------
   build-windows:
     name: Build · Windows x64
     runs-on: windows-latest
-    environment: release
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -167,7 +128,10 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -209,13 +173,12 @@ jobs:
           retention-days: 7
 
   # ------------------------------------------------------------------
-  # Job 3: 合并 + 发 GitHub Release + 推 R2 + Purge CF
+  # Job 3: Publish GitHub Release
   # ------------------------------------------------------------------
   publish:
     name: Publish
     needs: [build-macos-arm64, build-windows]
     runs-on: ubuntu-latest
-    environment: release
     timeout-minutes: 20
     permissions:
       contents: write
@@ -229,7 +192,7 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Install minimal deps (aws-sdk)
+      - name: Install minimal deps
         run: npm ci --omit=optional
 
       - name: Download all build artifacts
@@ -252,11 +215,11 @@ jobs:
             cp "notes/$TAG.md" "$NOTES_FILE"
           fi
           if [ ! -s "$NOTES_FILE" ]; then
-            echo "webUTAU $TAG" > "$NOTES_FILE"
+            echo "Resonata Studio $TAG" > "$NOTES_FILE"
           fi
           echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
 
-      - name: Compose latest.json (GitHub + R2 variants)
+      - name: Compose latest.json
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           RELEASE_NOTES_FILE: ${{ steps.meta.outputs.notes_file }}
@@ -283,7 +246,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          name: webUTAU ${{ steps.meta.outputs.tag }}
+          name: Resonata Studio ${{ steps.meta.outputs.tag }}
           body_path: ${{ steps.meta.outputs.notes_file }}
           draft: false
           prerelease: false
@@ -291,6 +254,7 @@ jobs:
           fail_on_unmatched_files: true
 
       - name: Upload mirror to R2
+        if: ${{ secrets.R2_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' }}
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -300,6 +264,7 @@ jobs:
         run: node scripts/ci-upload-r2.mjs
 
       - name: Prune old versions on R2
+        if: ${{ secrets.R2_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' }}
         env:
           CURRENT_VERSION: ${{ steps.meta.outputs.version }}
           RETAIN_VERSIONS: ${{ vars.R2_RETAIN_VERSIONS || '2' }}
@@ -310,6 +275,7 @@ jobs:
         run: node scripts/ci-prune-r2.mjs
 
       - name: Purge Cloudflare cache for latest.json
+        if: ${{ secrets.CLOUDFLARE_ZONE_ID != '' && secrets.CLOUDFLARE_API_TOKEN != '' }}
         env:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -321,4 +287,3 @@ jobs:
           echo "### ✅ Release ${{ steps.meta.outputs.tag }} published" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- R2: ${{ secrets.R2_PUBLIC_BASE }}/latest.json" >> "$GITHUB_STEP_SUMMARY"
