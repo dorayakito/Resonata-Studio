@@ -5,7 +5,7 @@
   </picture>
 </div>
 
-<p align="center"><strong>Resonata Studio</strong> — Estação de Trabalho Completa para Cantores Virtuais (Web & Desktop)</p>
+<p align="center"><strong>Resonata Studio</strong>: Estação de Trabalho Completa para Cantores Virtuais (Web & Desktop)</p>
 <p align="center">Importe MIDI, insira letras e deixe a voz virtual cantar por você!</p>
 
 ![Prévia da Interface do Resonata Studio](docs/screenshot.png)
