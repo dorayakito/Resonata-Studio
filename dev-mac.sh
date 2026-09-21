@@ -1,6 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 unsetopt bg_nice 2>/dev/null || true
+export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-LatestMajor}"
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SELF="$ROOT/dev-mac.sh"
