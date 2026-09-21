@@ -176,11 +176,83 @@ jobs:
           retention-days: 7
 
   # ------------------------------------------------------------------
-  # Job 3: Publish GitHub Release
+  # Job 3: Linux x64 Build
+  # ------------------------------------------------------------------
+  build-linux-x64:
+    name: Build · Linux x64
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Tauri bundle (deb & AppImage)
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npx tauri build --bundles deb,appimage
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p linux-out
+          cp src-tauri/target/release/bundle/deb/*.deb linux-out/ 2>/dev/null || true
+          cp src-tauri/target/release/bundle/appimage/*.AppImage linux-out/ 2>/dev/null || true
+          cp src-tauri/target/release/bundle/appimage/*.sig linux-out/ 2>/dev/null || true
+          ls -la linux-out/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: linux-out/*
+          if-no-files-found: error
+          retention-days: 7
+
+  # ------------------------------------------------------------------
+  # Job 4: Publish GitHub Release
   # ------------------------------------------------------------------
   publish:
     name: Publish
-    needs: [build-macos-arm64, build-windows]
+    needs: [build-macos-arm64, build-windows, build-linux-x64]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -240,7 +312,8 @@ jobs:
             -name "*.tar.gz" -o \
             -name "*.nsis.zip" -o \
             -name "*.sig" -o \
-            -name "*.AppImage" \
+            -name "*.AppImage" -o \
+            -name "*.deb" \
           \) -exec cp {} release-assets/ \;
           cp dist-release/latest.github.json release-assets/latest.json
           ls -lh release-assets/
